@@ -1,0 +1,140 @@
+﻿@using hasbiHAliCia.Veri.Varlik;
+<style>
+    input, input:focus {
+        margin-right: 15px;
+    }
+
+</style>
+@{
+
+    VKullanici kullanici = ViewBag.Kullanici;
+    var iletiler = ViewBag.Iletiler;
+    ViewData["KullaniciAdi"] = kullanici.KullaniciAdi;
+    ViewData["Title"] = "Sohbet";
+}
+
+<script src="~/js/signalr/dist/browser/signalr.min.js"></script>
+<script>
+
+    var Baglanti = new signalR.HubConnectionBuilder().withUrl("/sohbetHub").build();
+
+    $(document).ready(function () {
+        
+        Baglanti.start().then(function () {
+            IletileriAl();
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        Baglanti.on("IletiAl", function (Iletiler) {
+            $("#IletiListesi").empty();
+
+
+            var IletiListesi = "";
+            Iletiler = Iletiler.reverse();
+            $.each(Iletiler, function (siraSayisi, HerBirIleti) {
+
+                IletiListesi += '<p><small><span class="badge bg-secondary me-1">' + HerBirIleti.GonderilmeZamani + '</small></span><br><b title="' + HerBirIleti.GonderilmeZamani + '">' + HerBirIleti.KullaniciAdi + ':</b> ' + HerBirIleti.Icerik + '</p>';
+
+            });
+            if (IletiListesi == "") {
+                IletiListesi = "Henüz kimse yazmamış.";
+            }
+            $("#IletiListesi").html(IletiListesi);
+        });
+
+        function IletileriAl() {
+            Baglanti.invoke("IletileriAl").catch(function (err) {
+                return console.error(err.toString());
+            });
+        }
+
+
+        $.iletiGonder = function () {
+            $("input#Ileti").attr({ "disabled": "disabled" });
+            var Ileti = {
+                Icerik: $("input#Ileti").val()
+            };
+            $.ajax({
+                url: "IletiMerkezi",
+                type: "post",
+                data: Ileti,
+                success: function (Donut) {
+                    $("input#Ileti").removeAttr("disabled");
+                    $("input#Ileti").focus();
+
+                    if (Donut == "Hata") {
+                        alert(Donut);
+                    }
+                    else {
+                        $("input#Ileti").val("");
+                    }
+
+                }
+            });
+        };
+
+        $("button#IletiGonder").click(function () {
+            $.iletiGonder();
+        });
+        $("input#Ileti").keydown(function (o) {
+            tusKodu = o.keyCode || e.which;
+            if (tusKodu === 13) {
+                $.iletiGonder();
+            }
+
+        });
+
+        $("input#Ileti").focus();
+    });
+</script>
+
+<header class="p-3 mb-3 border-bottom">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+            <a asp-action="Duvar" asp-controller="Anasayfa" class="navbar-brand text-black">hasbiHAliCia</a>
+
+            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                <li><a style="cursor: pointer;" class="nav-link px-2 link-dark" onclick="window.open('@Url.Action(action: "Hakkinda", controller: "Anasayfa")', 'Hakkında')">Hakkında</a></li>
+            </ul>
+
+
+            <div class="dropdown text-end">
+                <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span>@ViewData["KullaniciAdi"]</span>
+                </a>
+                <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+                    <li><a class="dropdown-item" asp-action="Cikis" asp-controller="Anasayfa" title="Çıkış yapmanız durumunda aynı kullanıcı adını alamazsınız.">Çıkış</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="container">
+    <div class="input-group mb-3">
+        <input type="text" class="form-control shadow-none" id="Ileti" placeholder="İletiniz..">
+        <div class="input-group-append">
+            <button class="form-control btn-primary" id="IletiGonder">Gönder</button>
+        </div>
+
+    </div>
+    <hr />
+    <div id="IletiListesi">
+        @if (iletiler != null)
+        {
+
+            @foreach (var Ileti in iletiler)
+            {
+                <p><small><span class="badge bg-secondary me-1">@Ileti.GonderilmeZamani</span></small><br /><b>@Ileti.KullaniciAdi:</b> @Ileti.Icerik</p>
+
+            }
+        }
+
+
+        @if (iletiler == null)
+        {
+            <p>Henüz ileti yok.</p>
+        }
+
+    </div>
+</div>

@@ -1,0 +1,105 @@
+﻿@model hasbiHAliCia.Models.Kullanici
+<style>
+    input, input:focus {
+        width: 145px;
+        border: none;
+        border-bottom: 1px solid #dfdfdf;
+        outline: none;
+        padding: 3px;
+        font-size: 12px !important;
+        background-color: white;
+    }
+
+    .container {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .Gir {
+        border: none;
+        font-size: 12px;
+        background-color: black;
+        color: white;
+        display: none;
+    }
+
+    .Yuvarlak {
+        width: 200px;
+        height: 200px;
+        background-color: white;
+        border-radius: 50%;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        padding-top: 70px;
+    }
+
+    html, body {
+        background-color: black;
+        height: 100%;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        var aramaDegistirgeleri = new URLSearchParams(window.location.search);
+        if (aramaDegistirgeleri.has("Hata")) {
+            $(".Yuvarlak").css({"background-color": "red"});
+            $("#KullaniciAdi").css({ "background-color": "red", "color":"white" });
+            $(".Kim").css({ "color": "white" });
+            var Hata = aramaDegistirgeleri.get("Hata");
+
+
+            if (Hata == 1) {
+                alert("Lütfen sadece standart harf, rakam ve alt tire kullanınız.");
+            }
+            else if (Hata == 2) {
+                alert("Bu kullanıcı adı kullanıldı.");
+            }
+        }
+        $("#KullaniciAdi").focus();
+        $("input").keyup(function () {
+            if ($("input").val() != "") {
+                $(".Gir").stop().fadeIn(500);
+                $(".Yuvarlak").stop().animate({
+                    width: "250",
+                    height: "250",
+                    paddingTop: "90"
+                }, 500, function () {
+
+                });
+            }
+            else {
+                $(".Gir").stop().fadeOut(500);
+                $(".Yuvarlak").stop().animate({
+                    width: "200",
+                    height: "200",
+                    paddingTop: "70"
+                }, 500, function () {
+
+                });
+            }
+        });
+        $("input").bind("paste", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        });
+        $("input").on(
+            "input change paste blur select",
+            function(e) {
+                $(this).val($(this).val().replace(/[^a-z\d\_]+$/i, ""));
+        });
+    });
+
+</script>
+<div class="container">
+<form asp-controller="Anasayfa" asp-action="Duvar">
+        <div class="Yuvarlak align-middle text-center">
+            <div class="Kim">kimsiniz?</div>
+            <div><input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="text-center" maxlength="50" type="text" asp-for="KullaniciAdi" id="KullaniciAdi"></div>
+            <div class="mt-3">
+                <button class="Gir" type="submit">Gir →</button>
+            </div>
+            </div>
+</form>
+</div>
